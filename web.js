@@ -6,11 +6,15 @@ app.get('/', function(request, response) {
     var fs = require('fs');
     try {
       /// read index.html and send in response
-      var indexFileContent = fs.readFileSync("index.html");
+      var indexFileContent = fs.readFileSync('index.html', 'utf8');
       response.send(indexFileContent);
     }
     catch(e) {
       console.log("Error reading index.html");
     }
-  } 
+});
+
+var port = process.env.PORT || 5000;
+app.listen(port, function() {
+  console.log("Listening on " + port);
 });
