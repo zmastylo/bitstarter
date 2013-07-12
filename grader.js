@@ -22,6 +22,8 @@ References:
 */
 
 var fs = require('fs');
+var sys = require('util');
+var rest = require('restler');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
@@ -55,6 +57,17 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
+var scrapeSite = function(url) {
+  rest.get(url).on('complete', function(result) {
+    if (result instanceof Error) {
+      sys.puts('Error: ' + result.message);
+      this.retry(5000); // try again after 5 sec
+    } else {
+      fs.writeFileSync(HTMLFILE_DEFAULT, result);
+    }
+  });
+}
+
 var clone = function(fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
@@ -65,7 +78,13 @@ if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-u, --url <web_address>', 'Website address')
         .parse(process.argv);
+
+    if(program.url != null) {
+      scrapeSite(program.url);
+    } 
+    
     var checkJson = checkHtmlFile(program.file, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
